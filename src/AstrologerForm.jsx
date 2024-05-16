@@ -2,8 +2,14 @@
 
 import React from 'react';
 import { Button, TextField, MenuItem, FormControl, InputLabel, Select, Chip, Input } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 const AstrologerForm = ({ formData, onChange, onFileChange, onSubmit }) => {
+  const navigate = useNavigate();
+
+  const handleNavigate = () => {
+    navigate('/');
+  }
   return (
     <form onSubmit={onSubmit}>
       <TextField
@@ -78,6 +84,7 @@ const AstrologerForm = ({ formData, onChange, onFileChange, onSubmit }) => {
           ))}
         </Select>
       </FormControl>
+      <div style={{marginTop:5}}>
       <input
         accept="image/*"
         id="contained-button-file"
@@ -87,14 +94,19 @@ const AstrologerForm = ({ formData, onChange, onFileChange, onSubmit }) => {
         style={{ display: 'none' }}
         onChange={onFileChange}
       />
+      
       <label htmlFor="contained-button-file">
-        <Button variant="contained" component="span">
+        <Button variant="contained" component="span" sx={{marginRight:5}}>
           Upload Image
         </Button>
       </label>
-      <Button type="submit" variant="contained" color="primary">
+      <Button style={{marginRight:40}} type="submit" variant="contained" color="primary">
         Submit
       </Button>
+      <Button onClick={handleNavigate} type="submit" variant="contained" color="primary">
+        Home
+      </Button>
+      </div>
     </form>
   );
 };

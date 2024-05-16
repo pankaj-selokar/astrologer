@@ -11,8 +11,8 @@ function App() {
     <Router>
       <div className="background-container" style={{ backgroundImage: `url(${background2})`, height: '100vh', backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Routes>          
-          <Route path="/" element={<RegistrationForm  />} />
-          <Route path="/astrologers_list" element={<AstrologersList/>} />
+          <Route path="/registration" element={<RegistrationForm  />} />
+          <Route path="/" element={<AstrologersList/>} />
         </Routes>
         
       <ToastContainer />

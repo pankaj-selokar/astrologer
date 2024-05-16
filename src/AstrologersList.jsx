@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from '@mui/material';
-import { Button, Modal, Stack } from 'react-bootstrap';
+import { Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Paper, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from '@mui/material';
+import { Button, Modal, Stack, Table } from 'react-bootstrap';
 import axios from 'axios';
-import { getUser,deleteUser,getUserDetails } from './store/astrologersSlice';
+import { getUser, deleteUser, getUserDetails } from './store/astrologersSlice';
+import { useNavigate } from 'react-router-dom';
 
 
 const style = {
@@ -20,10 +21,9 @@ const style = {
 
 const AstrologersList = () => {
   const dispatch = useDispatch();
-  const { users } = useSelector((state) => state.users);
-  const user = useSelector(state => state?.user);
-//const user = userState ? userState.user : null;
-console.log(user);
+  
+  const { users, user } = useSelector((state) => state.users);
+
   const [openModal, setOpenModal] = useState(false);
   const [id, setId] = useState();
   const [deleteConfirmationModal, setDeleteConfirmationModal] = useState(false);
@@ -34,11 +34,12 @@ console.log(user);
     language: '',
     specialization: ''
   });
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
       const res = await axios.get(`http://localhost:5000/api/astrologers`);
-      dispatch(getUser(res.data)); 
+      dispatch(getUser(res.data));
     };
     fetchData();
   }, [dispatch]);
@@ -50,17 +51,17 @@ console.log(user);
   const handleEdit = async (id) => {
     setId(id);
     setOpenModal(true);
-    try {      
-        const response = await axios.get(`http://localhost:5000/api/astrologers/${id}`);
-        //console.log(response.data);
-        dispatch(getUserDetails(response.data));
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        throw new Error('Failed to fetch user data');
-      }
+    try {
+      const response = await axios.get(`http://localhost:5000/api/astrologers/${id}`);
+      //console.log(response.data);
+      dispatch(getUserDetails(response.data));
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      throw new Error('Failed to fetch user data');
+    }
   };
 
-  
+
 
   const handleInputChange = (e) => {
     setEditedAstrologer({
@@ -83,14 +84,14 @@ console.log(user);
     try {
       // Send PUT request to update astrologer
       const response = await axios.put(`http://localhost:5000/api/astrologers/${id}`, editedAstrologer);
-      
+
       // Check if request was successful
       if (response.status === 200) {
         console.log('Astrologer updated successfully');
-        
+
         const updatedData = await fetchData();
         //setData(updatedData);
-  
+
         setOpenModal(false);
       } else {
         console.error('Failed to update astrologer');
@@ -111,7 +112,7 @@ console.log(user);
 
       // Update the local state after successful deletion
       // const updatedUsers = users.filter(astrologer => astrologer.id !== editedAstrologer.id);
-      dispatch(deleteUser({id}));
+      dispatch(deleteUser({ id }));
 
       // Hide the delete confirmation modal
       setDeleteConfirmationModal(false);
@@ -126,35 +127,50 @@ console.log(user);
     // Hide delete confirmation modal
     setDeleteConfirmationModal(false);
   };
+  const handleNavigate = () => {
+    navigate('/registration')
+  }
   return (
+
     <div>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Gender</th>
-            <th>Email</th>
-            <th>Languages</th>
-            <th>Specialties</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((astrologer) => (
-            <tr key={astrologer.id}>
-              <td>{astrologer.id}</td>
-              <td>{astrologer.name}</td>
-              <td>{astrologer.gender}</td>
-              <td>{astrologer.email}</td>
-              <td>{astrologer.languages}</td>
-              <td>{astrologer.specialties}</td>
-              <td><button onClick={()=>handleEdit(astrologer.id)}>Edit</button></td>
-              <td><button onClick={()=>handleDelete(astrologer.id)}>Delete</button></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <TableContainer component={Paper}>
+        <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
+          <TableHead>
+            <TableRow>
+              <TableCell>ID</TableCell>
+              <TableCell align="right">Name</TableCell>
+              <TableCell align="right">Gender</TableCell>
+              <TableCell align="right">Email</TableCell>
+              <TableCell align="right">Languages</TableCell>
+              <TableCell align="right">Specialties</TableCell>
+              <TableCell align="right">Action</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {users.map((astrologer,index) => (
+              <TableRow key={astrologer.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                <TableCell component="th" scope="row">
+                  {index + 1}
+                </TableCell>
+                <TableCell>{astrologer.name}</TableCell>
+                <TableCell>{astrologer.gender}</TableCell>
+                <TableCell>{astrologer.email}</TableCell>
+                <TableCell>{astrologer.languages}</TableCell>
+                <TableCell>{astrologer.specialties}</TableCell>
+                <TableCell>
+                  <button onClick={() => handleEdit(astrologer.id)}>Edit</button>
+                </TableCell>
+                <TableCell>
+                  <button onClick={() => handleDelete(astrologer.id)}>Delete</button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+
+      <Button variant="contained" color="primary" onClick={handleNavigate}>New registration</Button>
 
       <Modal
         show={openModal}
@@ -168,35 +184,35 @@ console.log(user);
             <TextField
               label="Name"
               name="name"
-              value={user?.name || ''}
+              value={user[0]?.name || ''}
               onChange={handleInputChange}
             />
             <TextField
               label="Gender"
               name="gender"
-              value={user?.gender || ''}
+              value={user[0]?.gender || ''}
               onChange={handleInputChange}
             />
             <TextField
               label="Email"
               name="email"
-              value={user?.email || ''}
+              value={user[0]?.email || ''}
               onChange={handleInputChange}
             />
             <TextField
               label="Language"
               name="language"
-              value={user?.language || ''}
+              value={user[0]?.languages || ''}
               onChange={handleInputChange}
             />
             <TextField
               label="Specialization"
               name="specialization"
-              value={user?.specialization || ''}
+              value={user[0]?.specialties || ''}
               onChange={handleInputChange}
             />
             <Stack direction="row" spacing={2}>
-              <Button variant="contained" onClick={()=>handleSaveChanges(id)}>Save Changes</Button>
+              <Button variant="contained" onClick={() => handleSaveChanges(id)}>Save Changes</Button>
             </Stack>
           </div>
         </Box>
@@ -215,8 +231,8 @@ console.log(user);
 
         </DialogContent>
         <DialogActions>
-          <Button onClick={cancelDelete}>Cancel</Button>
-          <Button onClick={()=>confirmDelete(id)}>Delete</Button>
+          <Button variant="contained" color="primary" onClick={cancelDelete}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={() => confirmDelete(id)}>Delete</Button>
         </DialogActions>
       </Dialog>
     </div>
