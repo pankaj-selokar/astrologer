@@ -35,8 +35,6 @@ const RegisterAstrologerPage = () => {
     formDataToSend.append('email', formData.email);
     formDataToSend.append('languages', formData.languages.join(','));
     formDataToSend.append('specialties', formData.specialties.join(','));
-    // formDataToSend.append('image', formData.image);
-     // Check if a file is selected before appending it
     if (formData.image) {
       formDataToSend.append('file', formData.image);
     }

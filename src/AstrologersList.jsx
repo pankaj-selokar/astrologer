@@ -1,40 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Paper, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from '@mui/material';
-import { Button, Modal, Stack, Table } from 'react-bootstrap';
+import { Box, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, Input, InputLabel, MenuItem, Paper, Select, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from '@mui/material';
+import { Button, Stack, Table } from '@mui/material';
 import axios from 'axios';
 import { getUser, deleteUser, getUserDetails } from './store/astrologersSlice';
 import { useNavigate } from 'react-router-dom';
-
-
-const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  bgcolor: 'background.paper',
-  border: '2px solid #000',
-  boxShadow: 24,
-  p: 4,
-};
+import { toast } from 'react-toastify';
 
 const AstrologersList = () => {
   const dispatch = useDispatch();
-  
   const { users, user } = useSelector((state) => state.users);
 
   const [openModal, setOpenModal] = useState(false);
-  const [id, setId] = useState();
+  const [id, setId] = useState(null);
   const [deleteConfirmationModal, setDeleteConfirmationModal] = useState(false);
   const [editedAstrologer, setEditedAstrologer] = useState({
     name: '',
     gender: '',
     email: '',
-    language: '',
-    specialization: ''
+    languages: [],
+    specialties: []
   });
+
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (id && user) {
+      setEditedAstrologer({
+        name: user[0]?.name || '',
+        gender: user[0]?.gender || '',
+        email: user[0]?.email || '',
+        languages: user[0]?.languages || '',
+        specialties: user[0]?.specialties || ''
+      });
+    }
+  }, [id, user]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,21 +53,18 @@ const AstrologersList = () => {
     setOpenModal(true);
     try {
       const response = await axios.get(`http://localhost:5000/api/astrologers/${id}`);
-      //console.log(response.data);
       dispatch(getUserDetails(response.data));
+      setEditedAstrologer(response.data);
     } catch (error) {
       console.error('Error fetching user data:', error);
-      throw new Error('Failed to fetch user data');
     }
   };
 
-
-
   const handleInputChange = (e) => {
-    setEditedAstrologer({
-      ...editedAstrologer,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setEditedAstrologer(prevState => ({
+      ...prevState, [name]: value
+    }));
   };
 
   const fetchData = async () => {
@@ -80,17 +77,15 @@ const AstrologersList = () => {
     }
   };
 
-  const handleSaveChanges = async (id) => {
+  const handleSaveChanges = async () => {
     try {
-      // Send PUT request to update astrologer
       const response = await axios.put(`http://localhost:5000/api/astrologers/${id}`, editedAstrologer);
 
-      // Check if request was successful
       if (response.status === 200) {
         console.log('Astrologer updated successfully');
 
         const updatedData = await fetchData();
-        //setData(updatedData);
+        dispatch(getUser(updatedData));
 
         setOpenModal(false);
       } else {
@@ -104,50 +99,46 @@ const AstrologersList = () => {
   const handleDelete = (id) => {
     setId(id);
     setDeleteConfirmationModal(true);
-    console.log(`Deleting astrologer with ID ${id}`);
   };
-  const confirmDelete = async (id) => {
+
+  const confirmDelete = async () => {
     try {
       await axios.delete(`http://localhost:5000/api/astrologers/${id}`);
 
-      // Update the local state after successful deletion
-      // const updatedUsers = users.filter(astrologer => astrologer.id !== editedAstrologer.id);
       dispatch(deleteUser({ id }));
 
-      // Hide the delete confirmation modal
       setDeleteConfirmationModal(false);
-
-      console.log(`Deleted astrologer with ID ${editedAstrologer.id}`);
-    }
-    catch (error) {
+      toast.success('User deleted successfully!');
+    } catch (error) {
       console.error('Error deleting astrologer:', error);
     }
   };
+
   const cancelDelete = () => {
-    // Hide delete confirmation modal
     setDeleteConfirmationModal(false);
   };
-  const handleNavigate = () => {
-    navigate('/registration')
-  }
-  return (
 
+  const handleNavigate = () => {
+    navigate('/registration');
+  };
+
+  return (
     <div>
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
           <TableHead>
             <TableRow>
               <TableCell>ID</TableCell>
-              <TableCell align="right">Name</TableCell>
+              <TableCell align="left">Name</TableCell>
               <TableCell align="right">Gender</TableCell>
-              <TableCell align="right">Email</TableCell>
+              <TableCell align="center">Email</TableCell>
               <TableCell align="right">Languages</TableCell>
               <TableCell align="right">Specialties</TableCell>
-              <TableCell align="right">Action</TableCell>
+              <TableCell align="left">Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {users.map((astrologer,index) => (
+            {users.map((astrologer, index) => (
               <TableRow key={astrologer.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                 <TableCell component="th" scope="row">
                   {index + 1}
@@ -158,10 +149,10 @@ const AstrologersList = () => {
                 <TableCell>{astrologer.languages}</TableCell>
                 <TableCell>{astrologer.specialties}</TableCell>
                 <TableCell>
-                  <button onClick={() => handleEdit(astrologer.id)}>Edit</button>
+                  <Button variant="contained" color="primary" onClick={() => handleEdit(astrologer.id)}>Edit</Button>
                 </TableCell>
                 <TableCell>
-                  <button onClick={() => handleDelete(astrologer.id)}>Delete</button>
+                  <Button variant="contained" color="error" onClick={() => handleDelete(astrologer.id)}>Delete</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -169,54 +160,105 @@ const AstrologersList = () => {
         </Table>
       </TableContainer>
 
+      <Button variant="contained" color="success" style={{ marginTop: 40 }} onClick={handleNavigate}>
+        New registration
+      </Button>
 
-      <Button variant="contained" color="primary" onClick={handleNavigate}>New registration</Button>
-
-      <Modal
-        show={openModal}
-        onHide={handleCloseModal}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-          <div>
-            <h2>Edit Astrologer</h2>
-            <TextField
-              label="Name"
-              name="name"
-              value={user[0]?.name || ''}
+      <Dialog open={openModal} onClose={handleCloseModal} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+        <DialogTitle id="modal-modal-title">Edit Astrologer</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Name"
+            name="name"
+            value={editedAstrologer.name || ''}
+            onChange={handleInputChange}
+            fullWidth
+            margin="dense"
+          />
+          <TextField
+            label="Gender"
+            name="gender"
+            value={editedAstrologer.gender || ''}
+            onChange={handleInputChange}
+            fullWidth
+            margin="dense"
+          />
+          <TextField
+            label="Email"
+            name="email"
+            value={editedAstrologer.email || ''}
+            onChange={handleInputChange}
+            fullWidth
+            margin="dense"
+          />
+          <FormControl fullWidth>
+            <InputLabel id="languages-label">Languages</InputLabel>
+            <Select
+              labelId="languages-label"
+              id="languages"
+              name="languages"
+              multiple
+              value={Array.isArray(editedAstrologer.languages) ? editedAstrologer.languages : (editedAstrologer.languages || '').split(',')}
               onChange={handleInputChange}
-            />
-            <TextField
-              label="Gender"
-              name="gender"
-              value={user[0]?.gender || ''}
-              onChange={handleInputChange}
-            />
-            <TextField
-              label="Email"
-              name="email"
-              value={user[0]?.email || ''}
-              onChange={handleInputChange}
-            />
-            <TextField
-              label="Language"
-              name="language"
-              value={user[0]?.languages || ''}
-              onChange={handleInputChange}
-            />
-            <TextField
-              label="Specialization"
-              name="specialization"
-              value={user[0]?.specialties || ''}
-              onChange={handleInputChange}
-            />
-            <Stack direction="row" spacing={2}>
-              <Button variant="contained" onClick={() => handleSaveChanges(id)}>Save Changes</Button>
-            </Stack>
-          </div>
-        </Box>
-      </Modal>
+              input={<Input id="select-multiple-chip" />}
+              renderValue={(selected) => (
+                <div>
+                  {selected.map((value) => (
+                    <Chip key={value} label={value} />
+                  ))}
+                </div>
+              )}
+            >
+              {['English', 'Spanish', 'French', 'German'].map((language) => (
+                <MenuItem key={language} value={language}>
+                  {language}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {/* <TextField
+            label="Specialties"
+            name="specialties"
+            value={Array.isArray(editedAstrologer.specialties ) ? editedAstrologer.specialties : (editedAstrologer.specialties || '').split(',')}
+            onChange={handleInputChange}
+            fullWidth
+            margin="dense"
+          /> */}
+          <FormControl fullWidth>
+        <InputLabel id="specialties-label">Specialties</InputLabel>
+        <Select
+          labelId="specialties-label"
+          id="specialties"
+          name="specialties"
+          multiple
+          value={Array.isArray(editedAstrologer.specialties ) ? editedAstrologer.specialties : (editedAstrologer.specialties || '').split(',')}
+          onChange={handleInputChange}
+          //error={!!errors.specialties} 
+          //</FormControl>helperText={errors.specialties}
+          input={<Input id="select-multiple-chip" />}
+          required
+          renderValue={(selected) => (
+            <div>
+              {selected.map((value) => (
+                <Chip key={value} label={value} />
+              ))}
+            </div>
+          )}
+        >
+          {['Horoscope Reading', 'Tarot Card Reading', 'Astrology Chart Analysis', 'Palmistry'].map((specialty) => (
+            <MenuItem key={specialty} value={specialty}>
+              {specialty}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+          <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+            <Button variant="contained" onClick={handleSaveChanges}>
+              Save Changes
+            </Button>
+          </Stack>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={deleteConfirmationModal}
@@ -224,15 +266,15 @@ const AstrologersList = () => {
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">
-          {"Are you sure to delete this record?"}
-        </DialogTitle>
-        <DialogContent>
-
-        </DialogContent>
+        <DialogTitle id="alert-dialog-title">{"Are you sure to delete this record?"}</DialogTitle>
+        <DialogContent />
         <DialogActions>
-          <Button variant="contained" color="primary" onClick={cancelDelete}>Cancel</Button>
-          <Button variant="contained" color="error" onClick={() => confirmDelete(id)}>Delete</Button>
+          <Button variant="contained" color="primary" onClick={cancelDelete}>
+            Cancel
+          </Button>
+          <Button variant="contained" color="error" onClick={confirmDelete}>
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
     </div>
